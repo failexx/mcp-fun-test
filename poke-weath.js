@@ -1,12 +1,15 @@
 import OpenAI from "openai";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import 'dotenv/config';
 
 // Starta MCP-servern och koppla upp
 const transport = new StdioClientTransport({
   command: "node",
   args: ["server.js"],
 });
+
+const api_Key = process.env.OPENROUTER_API_KEY;
 
 const mcp = new Client({ name: "test-client", version: "1.0.0" });
 await mcp.connect(transport);
@@ -25,7 +28,7 @@ const openaiTools = tools.map((tool) => ({
 }));
 
 const client = new OpenAI({
-  apiKey: "din api-nyckel här",
+  apiKey: api_Key,
   //jag använde mig av openrouter för att få api-nyckel
   baseURL: "https://openrouter.ai/api/v1",
 });
