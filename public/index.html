@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pokémon Weather Agent</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      color: #ffcb05;
+      text-shadow: 0 0 12px #ffcb0566;
+      letter-spacing: 1px;
+    }
+
+    header p {
+      color: #a0a0c0;
+      margin-top: 0.4rem;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 720px;
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #a0a0c0;
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      background: #0f3460;
+      border: 1px solid #1a4a80;
+      border-radius: 8px;
+      color: #e0e0e0;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+      resize: vertical;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: #ffcb05;
+    }
+
+    .field + .field {
+      margin-top: 1rem;
+    }
+
+    button#runBtn {
+      margin-top: 1.25rem;
+      width: 100%;
+      padding: 0.75rem;
+      background: #ffcb05;
+      color: #1a1a2e;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      letter-spacing: 0.5px;
+    }
+
+    button#runBtn:hover:not(:disabled) { background: #ffd740; }
+    button#runBtn:active:not(:disabled) { transform: scale(0.98); }
+    button#runBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #log {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .log-entry {
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .log-entry.tool-call {
+      background: #0f3460;
+      border-left: 4px solid #4fc3f7;
+    }
+
+    .log-entry.tool-result {
+      background: #0d2a1e;
+      border-left: 4px solid #66bb6a;
+    }
+
+    .log-entry.final {
+      background: #1a1a2e;
+      border: 1px solid #ffcb05;
+      border-left: 4px solid #ffcb05;
+    }
+
+    .log-entry.error {
+      background: #2a0e0e;
+      border-left: 4px solid #ef5350;
+      color: #ef9a9a;
+    }
+
+    .log-entry .tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 0.35rem;
+      display: block;
+    }
+
+    .tool-call .tag  { color: #4fc3f7; }
+    .tool-result .tag { color: #66bb6a; }
+    .final .tag       { color: #ffcb05; }
+    .error .tag       { color: #ef5350; }
+
+    .log-entry pre {
+      background: #00000030;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-top: 0.4rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    #status {
+      color: #a0a0c0;
+      font-size: 0.85rem;
+      text-align: center;
+      margin-top: 0.5rem;
+      min-height: 1.2em;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #a0a0c0;
+      border-top-color: #ffcb05;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .info-card {
+      background: #0f3460;
+      border: 1px solid #1a4a80;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      width: 100%;
+      max-width: 720px;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #c0c8e0;
+    }
+
+    .info-card h2 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #4fc3f7;
+      margin-bottom: 0.6rem;
+    }
+
+    .info-card ol {
+      padding-left: 1.25rem;
+    }
+
+    .info-card a {
+      color: #ffcb05;
+      text-decoration: none;
+    }
+
+    .info-card a:hover { text-decoration: underline; }
+
+    .info-card code {
+      background: #00000040;
+      border-radius: 4px;
+      padding: 0.1em 0.4em;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85em;
+      color: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>⚡ Pokémon Weather Agent</h1>
+    <p>AI-agenten hämtar väder, väljer en Pokémon och kopplar det till historia.</p>
+  </header>
+
+  <div class="info-card">
+    <h2>ℹ️ Kom igång</h2>
+    <ol>
+      <li>Skapa ett konto på <a href="https://openrouter.ai" target="_blank">openrouter.ai</a> och hämta en gratis API-nyckel.</li>
+      <li>Lägg in nyckeln i <code>.env</code>: <code>OPENROUTER_API_KEY=din_nyckel</code></li>
+      <li>Välj en AI-modell från <a href="https://openrouter.ai/models" target="_blank">openrouter.ai/models</a> och skriv in modellnamnet i <code>agent.js</code> (variabeln <code>MODEL</code>).</li>
+      <li>Starta servern med <code>npm start</code> och öppna <code>http://localhost:3000</code>.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label for="promptInput">Prompt, skriv in väder från stad, en historisk händelse eller Pokémon (valfri – lämna tom för standardfrågan)</label>
+      <textarea id="promptInput" rows="3" placeholder="Lämna tom för att använda standardprompt..."></textarea>
+    </div>
+    <button id="runBtn">▶ Kör agent</button>
+    <p id="status"></p>
+  </div>
+
+  <div id="log"></div>
+
+  <script>
+    const runBtn     = document.getElementById("runBtn");
+    const promptInput = document.getElementById("promptInput");
+    const logEl      = document.getElementById("log");
+    const statusEl   = document.getElementById("status");
+
+    const TOOL_LABELS = {
+      get_pokemon: "🐾 Hämtar Pokémon",
+      get_weather:  "🌤️  Hämtar väder",
+      search_web:   "🔍 Söker Wikipedia",
+    };
+
+    function addEntry(cls, tag, bodyHTML) {
+      const el = document.createElement("div");
+      el.className = `log-entry ${cls}`;
+      el.innerHTML = `<span class="tag">${tag}</span>${bodyHTML}`;
+      logEl.appendChild(el);
+      el.scrollIntoView({ behavior: "smooth", block: "end" });
+      return el;
+    }
+
+    function setStatus(html) {
+      statusEl.innerHTML = html;
+    }
+
+    runBtn.addEventListener("click", () => {
+      logEl.innerHTML = "";
+      runBtn.disabled = true;
+      setStatus('<span class="spinner"></span> Agenten körs...');
+
+      const params = new URLSearchParams();
+      const prompt = promptInput.value.trim();
+      if (prompt) params.set("prompt", prompt);
+
+      const es = new EventSource(`/run?${params}`);
+
+      es.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+
+        if (data.type === "tool_call") {
+          const label = TOOL_LABELS[data.name] || `🔧 ${data.name}`;
+          let args;
+          try { args = JSON.stringify(JSON.parse(data.args), null, 2); }
+          catch { args = data.args; }
+          addEntry("tool-call", label, `<pre>${escHtml(args)}</pre>`);
+        }
+
+        else if (data.type === "tool_result") {
+          const label = `✅ Svar från ${data.name}`;
+          addEntry("tool-result", label, `<pre>${escHtml(data.result)}</pre>`);
+        }
+
+        else if (data.type === "final") {
+          addEntry("final", "💬 Agentens slutsvar", `<p>${escHtml(data.content)}</p>`);
+        }
+
+        else if (data.type === "error") {
+          addEntry("error", "❌ Fel", `<pre>${escHtml(data.message)}</pre>`);
+        }
+
+        else if (data.type === "done") {
+          es.close();
+          runBtn.disabled = false;
+          setStatus("✅ Klar!");
+        }
+      };
+
+      es.onerror = () => {
+        es.close();
+        addEntry("error", "❌ Anslutningsfel", "<p>Kunde inte nå servern.</p>");
+        runBtn.disabled = false;
+        setStatus("");
+      };
+    });
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+  </script>
+</body>
+</html>
