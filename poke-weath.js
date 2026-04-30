@@ -37,7 +37,7 @@ const messages = [
   { role: "user", content: "Hej, hämta väder från en storstad i världen. Från det vädret så välj en pokemon som passar i klimatet. Sök sedan på wikipedia efter en händelse kopplat till staden, och se hur pokemonen hade kunnat ändra historian. Om du inte hittar ett bra svar så är det okej, avsluta loopen." }
 ];
 
-// Agenloop
+// Agentloop
 while (true) {
   const response = await client.chat.completions.create({
     model: "sätt in din ai-modell här",
