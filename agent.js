@@ -8,7 +8,7 @@ import 'dotenv/config';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Ändra modellnamnet här. Hitta modeller på https://openrouter.ai/models
-const MODEL = "nvidia/nemotron-3-super-120b-a12b:free";
+const MODEL = "sätt in din ai-modell här";
 
 export async function* runAgent(userPrompt, model = MODEL) {
   const transport = new StdioClientTransport({
@@ -43,10 +43,10 @@ export async function* runAgent(userPrompt, model = MODEL) {
         "Du är en AI-agent med tillgång till tre verktyg: get_weather, get_pokemon och search_web.\n" +
         "Följ ALLTID denna ordning och gör bara ETT API-kall per steg, annars fastnar du onödigt:\n" +
         "1. Välj en känd storstad och anropa get_weather med stadens kända koordinater (du vet dessa utan att söka).\n" +
-        "2. Baserat på temperaturen och väderkoden, välj en lämplig Pokémon och anropa get_pokemon.\n" +
+        "2. Baserat på temperaturen och väderkoden, välj en lämplig Pokémon genom att anropa get_pokemon.\n" +
         "3. Anropa search_web för att hitta en historisk händelse kopplad till staden. Välj inga militära, krig eller katastrofer.\n" +
         "4. Skriv ett roligt slutsvar som kopplar ihop vädret, Pokémonen och händelsen.\n" +
-        "Använd ALDRIG search_web för att hitta koordinater – du kan dem redan.",
+        "Använd ALDRIG search_web för att hitta koordinater, du kan dem redan.",
     },
     { role: "user", content: userPrompt },
   ];
